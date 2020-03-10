@@ -3,10 +3,13 @@ services:
   centos7php73run:
     build:
       context: .
-    image: aursu/php73build:7-runtime
+      args:
+        centos: $OS7
+    image: "aursu/php73build:${OS7TAG}-runtime"
   centos7php73devbase:
     build:
       context: .
       args:
-        image: 7-nodedev
-    image: aursu/php73build:7-devbase
+        image: nodedev
+        centos: $OS7
+    image: "aursu/php73build:${OS7TAG}-devbase"

@@ -12,6 +12,11 @@ env:
   global:
     - PACKAGE_VCS_URL=https://github.com/aursu/rpmbuild-php-7.3
     - BINTRAY_REPO=php73custom
+    - OS7=7.7.1908
+    - OS8=8.1.1911
+    - TAGDEPLOY=0
+    - OS7TAG=7.7.1908
+    - OS8TAG=8.1.1911
   jobs:
     - BUILD_COMPOSE_FILE=docker-compose.yml       BASE=centos7php73base BUILD=centos7php73    UPLOADER=centos7bintray
     - BUILD_COMPOSE_FILE=docker-compose.yml       BASE=centos7php73base BUILD=centos7php73rel UPLOADER=centos7bintray
@@ -33,8 +38,6 @@ before_deploy:
 deploy:
   provider: script
   script: docker-compose -f rpmbuild/docker-compose.bintray.yml run --rm -e BINTRAY_USER=$BINTRAY_USER -e BINTRAY_API_KEY=$BINTRAY_API_KEY -e BINTRAY_REPO=$BINTRAY_REPO -e PACKAGE_VCS_URL=$PACKAGE_VCS_URL ${UPLOADER}
-  on:
-    all_branches: true
 
 jobs:
   include:
@@ -46,13 +49,15 @@ jobs:
       before_script: skip
       script:
         - docker-compose -f build/docker-compose.yml build --no-cache --pull
+      after_success:
+        - OS7TAG=7 docker-compose -f build/docker-compose.yml build
       before_deploy:
         - docker login -u $DOCKER_USER -p $DOCKER_PASS
       deploy:
-        provider: script
-        script: docker-compose -f build/docker-compose.yml push
-        on:
-          all_branches: true
+        - provider: script
+          script: docker-compose -f build/docker-compose.yml push
+        - provider: script
+          script: OS7TAG=7 docker-compose -f build/docker-compose.yml push
     - stage: build
       before_install:
         - docker-compose -f rpmbuild/docker-compose.yml pull  centos7repo centos8repo webrepo
@@ -61,18 +66,22 @@ jobs:
       before_script: skip
       script:
         - docker-compose -f build/docker-compose.el8.yml build --no-cache --pull
+      after_success:
+        - OS8TAG=8 docker-compose -f build/docker-compose.el8.yml build
       before_deploy:
         - docker login -u $DOCKER_USER -p $DOCKER_PASS
       deploy:
-        provider: script
-        script: docker-compose -f build/docker-compose.el8.yml push
-        on:
-          all_branches: true
+        - provider: script
+          script: docker-compose -f build/docker-compose.el8.yml push
+        - provider: script
+          script: OS8TAG=8 docker-compose -f build/docker-compose.el8.yml push
     - stage: runtime
       install: skip
       before_script: skip
       script:
         - docker-compose -f run/docker-compose.yml build --no-cache --pull
+      after_success:
+        - OS7TAG=7 docker-compose -f run/docker-compose.yml build
       before_deploy:
         - docker login -u $DOCKER_USER -p $DOCKER_PASS
       deploy:
@@ -80,30 +89,39 @@ jobs:
         script: docker-compose -f run/docker-compose.yml push
         on:
           all_branches: true
+      deploy:
+        - provider: script
+          script: docker-compose -f run/docker-compose.yml push
+        - provider: script
+          script: OS7TAG=7 docker-compose -f run/docker-compose.yml push
     - stage: runtime
       install: skip
       before_script: skip
       script:
         - docker-compose -f run/docker-compose.el8.yml build --no-cache --pull
+      after_success:
+        - OS8TAG=8 docker-compose -f build/docker-compose.el8.yml build
       before_deploy:
         - docker login -u $DOCKER_USER -p $DOCKER_PASS
       deploy:
-        provider: script
-        script: docker-compose -f run/docker-compose.el8.yml push
-        on:
-          all_branches: true
+        - provider: script
+          script: docker-compose -f run/docker-compose.el8.yml push
+        - provider: script
+          script: OS8TAG=8 docker-compose -f run/docker-compose.el8.yml push
     - stage: dev
       install: skip
       before_script: skip
       script:
         - docker-compose -f run/docker-compose.dev.yml build --no-cache --pull
+      after_success:
+        - OS7TAG=7 OS8TAG=8 docker-compose -f build/docker-compose.el8.yml build
       before_deploy:
         - docker login -u $DOCKER_USER -p $DOCKER_PASS
       deploy:
-        provider: script
-        script: docker-compose -f run/docker-compose.dev.yml push
-        on:
-          all_branches: true
+        - provider: script
+          script: docker-compose -f run/docker-compose.dev.yml push
+        - provider: script
+          script: OS7TAG=7 OS8TAG=8 docker-compose -f run/docker-compose.dev.yml push
 
 stages:
   - test

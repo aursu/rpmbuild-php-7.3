@@ -84,11 +84,6 @@ jobs:
       before_deploy:
         - docker login -u $DOCKER_USER -p $DOCKER_PASS
       deploy:
-        provider: script
-        script: docker-compose -f run/docker-compose.yml push
-        on:
-          all_branches: true
-      deploy:
         - provider: script
           script: docker-compose -f run/docker-compose.yml push
         - provider: script
@@ -113,7 +108,7 @@ jobs:
       script:
         - docker-compose -f run/docker-compose.dev.yml build --no-cache --pull
       after_success:
-        - OS7TAG=7 OS8TAG=8 docker-compose -f run/docker-compose.el8.yml build
+        - OS7TAG=7 OS8TAG=8 docker-compose -f run/docker-compose.dev.yml build
       before_deploy:
         - docker login -u $DOCKER_USER -p $DOCKER_PASS
       deploy:

@@ -153,7 +153,7 @@
 
 Summary: PHP scripting language for creating dynamic web sites
 Name: %{php_main}
-Version: 7.3.13
+Version: 7.3.15
 Release: %{rpmrel}%{?mytag}%{?dist}
 
 # All files licensed under PHP version 3.01, except
@@ -180,9 +180,6 @@ Source13: nginx-fpm.conf
 Source14: nginx-php.conf
 Source15: php-cgi-fcgi.ini
 Source16: https://downloads.ioncube.com/loader_downloads/ioncube_loaders_lin_x86-64.tar.gz
-# See https://secure.php.net/gpg-keys.php
-Source20: https://www.php.net/distributions/php-keyring.gpg
-Source21: https://www.php.net/distributions/php-%{version}.tar.xz.asc
 
 # Configuration files for some extensions
 Source50: 10-opcache.ini
@@ -1445,6 +1442,12 @@ exit 0
 %endif
 
 %changelog
+* Tue Feb 18 2020 Remi Collet <remi@remirepo.net> - 7.3.15-1
+- Update to 7.3.15 - http://www.php.net/releases/7_3_15.php
+
+* Tue Jan 21 2020 Remi Collet <remi@remirepo.net> - 7.3.14-1
+- Update to 7.3.14 - http://www.php.net/releases/7_3_14.php
+
 * Tue Dec 17 2019 Remi Collet <remi@remirepo.net> - 7.3.13-1
 - Update to 7.3.13 - http://www.php.net/releases/7_3_13.php
 

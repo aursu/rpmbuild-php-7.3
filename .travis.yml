@@ -14,7 +14,6 @@ env:
     - BINTRAY_REPO=php73custom
     - OS7=7.7.1908
     - OS8=8.1.1911
-    - TAGDEPLOY=0
     - OS7TAG=7.7.1908
     - OS8TAG=8.1.1911
   jobs:
@@ -100,7 +99,7 @@ jobs:
       script:
         - docker-compose -f run/docker-compose.el8.yml build --no-cache --pull
       after_success:
-        - OS8TAG=8 docker-compose -f build/docker-compose.el8.yml build
+        - OS8TAG=8 docker-compose -f run/docker-compose.el8.yml build
       before_deploy:
         - docker login -u $DOCKER_USER -p $DOCKER_PASS
       deploy:
@@ -114,7 +113,7 @@ jobs:
       script:
         - docker-compose -f run/docker-compose.dev.yml build --no-cache --pull
       after_success:
-        - OS7TAG=7 OS8TAG=8 docker-compose -f build/docker-compose.el8.yml build
+        - OS7TAG=7 OS8TAG=8 docker-compose -f run/docker-compose.el8.yml build
       before_deploy:
         - docker login -u $DOCKER_USER -p $DOCKER_PASS
       deploy:

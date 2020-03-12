@@ -1,26 +1,15 @@
 version: "3.5"
 services:
   centos8php73build:
-    networks:
-      - buildnet
     build:
       context: .
-      network: buildnet
       args:
         centos: $OS8
     image: "aursu/php73build:${OS8TAG}-build"
   centos8php73buildrel:
-    networks:
-      - buildnet
     build:
       context: .
       dockerfile: Dockerfile.rel
-      network: buildnet
       args:
         centos: $OS8
     image: "aursu/php73build:${OS8TAG}-build-rel"
-
-networks:
-  buildnet:
-    external: true
-    name: buildnet

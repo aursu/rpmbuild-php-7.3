@@ -1,4 +1,4 @@
-ARG centos=7.7.1908
+ARG centos=7.8.2003
 FROM aursu/php73build:${centos}-base
 
 COPY SOURCES ${BUILD_TOPDIR}/SOURCES

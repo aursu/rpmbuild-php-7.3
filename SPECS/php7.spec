@@ -153,7 +153,7 @@
 
 Summary: PHP scripting language for creating dynamic web sites
 Name: %{php_main}
-Version: 7.3.18
+Version: 7.3.19
 Release: %{rpmrel}%{?mytag}%{?dist}
 
 # All files licensed under PHP version 3.01, except
@@ -1442,6 +1442,9 @@ exit 0
 %endif
 
 %changelog
+* Tue Jun  9 2020 Remi Collet <remi@remirepo.net> - 7.3.19-1
+- Update to 7.3.19 - http://www.php.net/releases/7_3_19.php
+
 * Tue May 12 2020 Remi Collet <remi@remirepo.net> - 7.3.18-1
 - Update to 7.3.18 - http://www.php.net/releases/7_3_18.php
 

@@ -979,7 +979,7 @@ ln -sf ../configure
     --with-pcre-regex=%{_prefix} \
 %endif
     --with-system-tzdata \
-    --with-webp \
+    --with-webp-dir=%{_prefix} \
     --with-xmlrpc \
     --with-zlib \
     --without-pear \

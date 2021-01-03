@@ -7,6 +7,9 @@
 #
 # API/ABI check
 
+%define debug_package %{nil}
+%define _debugsource_template %{nil}
+
 # Building of CGI SAPI is disabled by default. Use --with cgi to enable it
 # tests are disabled by default. Use --with test to enable them
 

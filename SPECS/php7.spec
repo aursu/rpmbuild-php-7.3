@@ -114,6 +114,7 @@
 %global apiver      20180731
 %global zendver     20180731
 %global pdover      20170320
+%global zipver      1.13.0
 %global jsonver     1.7.0
 
 # we don't want -z defs linker flag
@@ -132,28 +133,37 @@
 
 %global mysql_sock %(mysql_config --socket 2>/dev/null || echo /var/lib/mysql/mysql.sock)
 
+%if 0%{?fedora} >= 27 || 0%{?rhel} >= 8
+%global with_libpcre  1
+%else
+%global with_libpcre  0
+%endif
+%global with_onig     1
+
 %global isasuffix -%{__isa_bits}
 
 %global  _nginx_home    %{_localstatedir}/lib/nginx
-# needed at srpm build time, when httpd-devel not yet installed
-%{!?_httpd_mmn:         %{expand: %%global _httpd_mmn        %%(cat %{_includedir}/httpd/.mmn 2>/dev/null || echo 0-0)}}
 
-%{!?_httpd_apxs: %global _httpd_apxs %{_sbindir}/apxs}
-%{!?_httpd_contentdir: %global _httpd_contentdir /var/www}
-%{!?_httpd_confdir: %global _httpd_confdir %{_sysconfdir}/httpd/conf.d}
-%{!?_httpd_moddir: %global _httpd_moddir %{_libdir}/httpd/modules}
+# /usr/sbin/apsx with httpd < 2.4 and defined as /usr/bin/apxs with httpd >= 2.4
+%{!?_httpd_apxs:       %{expand: %%global _httpd_apxs       %%{_sbindir}/apxs}}
+%{!?_httpd_mmn:        %{expand: %%global _httpd_mmn        %%(cat %{_includedir}/httpd/.mmn 2>/dev/null || echo 0-0)}}
+%{!?_httpd_confdir:    %{expand: %%global _httpd_confdir    %%{_sysconfdir}/httpd/conf.d}}
+# /etc/httpd/conf.d with httpd < 2.4 and defined as /etc/httpd/conf.modules.d with httpd >= 2.4
+%{!?_httpd_modconfdir: %{expand: %%global _httpd_modconfdir %%{_sysconfdir}/httpd/conf.d}}
+%{!?_httpd_moddir:     %{expand: %%global _httpd_moddir     %%{_libdir}/httpd/modules}}
+%{!?_httpd_contentdir: %{expand: %%global _httpd_contentdir /var/www}}
 
 %global with_argon2 1
 %global with_dtrace 1
 %global with_zip    1
 %global with_libzip 1
 
-%global rpmrel 1
+%global rpmrel 2
 %global baserel %{rpmrel}%{?dist}
 
 Summary: PHP scripting language for creating dynamic web sites
 Name: %{php_main}
-Version: 7.3.21
+Version: 7.3.25
 Release: %{rpmrel}%{?mytag}%{?dist}
 
 # All files licensed under PHP version 3.01, except
@@ -200,9 +210,9 @@ Source150: php7-10-opcache.ini
 # Build fixes
 Patch1: php-7.1.7-httpd.patch
 Patch5: php-7.2.0-includedir.patch
-Patch6: php-5.6.3-embed.patch
 Patch7: php-5.3.0-recode.patch
 Patch8: php-7.2.0-libdb.patch
+Patch9: php-7.0.7-curl.patch
 
 # Functional changes
 Patch40: php-7.2.4-dlopen.patch
@@ -211,11 +221,16 @@ Patch42: php-7.3.3-systzdata-v18.patch
 Patch43: php-7.3.0-phpize.patch
 # Use -lldap_r for OpenLDAP
 Patch45: php-7.2.3-ldap_r.patch
-# Make php_config.h constant across builds
-Patch46: php-7.2.4-fixheader.patch
+# Make php_config.h constant across builds (from 7.4)
+Patch46: php-7.3.20-fixheader.patch
 # drop "Configure command" from phpinfo output
-Patch47: php-5.6.3-phpinfo.patch
-Patch49: php-5.6.31-no-scan-dir-override.patch
+# and add build system and provider (from 8.0)
+Patch47: php-7.3.20-phpinfo.patch
+# backport FPM signals changes from 7.4
+# https://bugs.php.net/74083 master PHP-fpm is stopped on multiple reloads
+Patch49: php-7.3.24-fpm.patch
+
+Patch60: php-5.6.31-no-scan-dir-override.patch
 
 # Upstream fixes (100+)
 
@@ -223,7 +238,7 @@ Patch49: php-5.6.31-no-scan-dir-override.patch
 
 # Fixes for tests (300+)
 # Factory is droped from system tzdata
-Patch300: php-5.6.3-datetests.patch
+Patch300: php-7.0.10-datetests.patch
 
 # relocation (400+)
 Patch405: php7-php-7.2.0-includedir.patch
@@ -244,7 +259,7 @@ BuildRequires: libargon2-devel
 %endif
 BuildRequires: libc-client-devel
 BuildRequires: libcurl-devel
-BuildRequires: libicu-devel >= 4.0
+BuildRequires: libicu-devel >= 50
 BuildRequires: libjpeg-devel
 BuildRequires: libpng-devel
 BuildRequires: libstdc++-devel
@@ -252,9 +267,14 @@ BuildRequires: libtool >= 1.4.3
 BuildRequires: libtool-ltdl-devel
 BuildRequires: libwebp-devel
 BuildRequires: libxml2-devel
+%if %{with_zip}
 %if %{with_libzip}
-BuildRequires: libzip-devel >= 0.11
-Obsoletes: php-pecl-zip < 1.11
+# 0.11.1 required, but 1.0.1 is bundled
+BuildRequires: pkgconfig(libzip) >= 1.0.1
+%endif
+%if ! %{with_relocation}
+Obsoletes: php-pecl-zip          < %{zipver}
+%endif
 %endif
 %if %{with_libmysql}
 BuildRequires: mysql-devel
@@ -263,9 +283,15 @@ BuildRequires: mysql-devel
 # to ensure we are using nginx with filesystem feature (see #1142298)
 BuildRequires: nginx-filesystem
 %endif
+%if %{with_onig}
 BuildRequires: oniguruma-devel
+%endif
 BuildRequires: openssl-devel
-BuildRequires: pcre2-devel
+%if %{with_libpcre}
+BuildRequires: pcre2-devel >= 10.30
+%else
+Provides:      bundled(pcre2) = 10.32
+%endif
 BuildRequires: perl
 BuildRequires: smtpdaemon
 BuildRequires: sqlite-devel >= 3.6.0
@@ -380,7 +406,9 @@ Provides: php-mysqli = %{version}-%{baserel}
 Provides: php-mysqlnd = %{version}-%{baserel}
 Provides: php-mysqlnd%{?_isa} = %{version}-%{baserel}
 %endif
-Provides: bundled(oniguruma) = 5.9.6
+%if ! %{with_onig}
+Provides: bundled(oniguruma) = 6.9.0
+%endif
 # To use PHP's OpenSSL support you must also compile PHP --with-openssl
 Provides: php-openssl, php-openssl%{?_isa}
 # core PHP extension, so it is always enabled
@@ -419,6 +447,10 @@ Provides: php-xmlrpc, php-xmlrpc%{?_isa}
 %if %{with_zip}
 # compile PHP with zip support by using the --enable-zip
 Provides: php-zip, php-zip%{?_isa}
+Provides: php-pecl(zip)         = %{zipver}
+Provides: php-pecl(zip)%{?_isa} = %{zipver}
+Provides: php-pecl-zip          = %{zipver}
+Provides: php-pecl-zip%{?_isa}  = %{zipver}
 %endif
 # Zlib support in PHP is not enabled by default. You will need to configure PHP --with-zlib
 Provides: php-zlib, php-zlib%{?_isa}
@@ -487,6 +519,7 @@ Group: Development/Languages
 Summary: PHP FastCGI Process Manager
 BuildRequires: libacl-devel
 BuildRequires: nginx-filesystem
+BuildRequires: systemd-devel
 %{?systemd_requires}
 Requires: %{php_common}%{?_isa} = %{version}-%{baserel}
 Requires(pre): /usr/sbin/useradd
@@ -513,7 +546,9 @@ Requires: libargon2-devel%{?_isa}
 Requires: libedit-devel%{?_isa}
 Requires: libxml2-devel%{?_isa}
 Requires: openssl-devel%{?_isa}
+%if %{with_libpcre}
 Requires: pcre2-devel%{?_isa}
+%endif
 Requires: zlib-devel%{?_isa}
 
 %description devel
@@ -704,30 +739,40 @@ low-level PHP extension for the libsodium cryptographic library.
 %endif
 
 %patch8 -p1
+%if 0%{?rhel}
+%patch9 -p1
+%endif
 
 %if %{with_relocation}
 %patch409 -p1
 %endif
 
+%if 0%{?fedora} >= 28 || 0%{?rhel}
 %patch42 -p1
+%endif
 %patch43 -p1
 %patch45 -p1
 %patch46 -p1
 %patch47 -p1
 %patch49 -p1
 
+%patch60 -p1
+
 # upstream patches
 
 # security patches
 
 # Fixes for tests
+%if 0%{?fedora} >= 25 || 0%{?rhel}
 %patch300 -p1
+%endif
 
 # Prevent %%doc confusion over LICENSE files
 cp Zend/LICENSE Zend/ZEND_LICENSE
 cp TSRM/LICENSE TSRM_LICENSE
 cp sapi/fpm/LICENSE fpm_LICENSE
 cp ext/mbstring/libmbfl/LICENSE libmbfl_LICENSE
+cp ext/mbstring/oniguruma/COPYING oniguruma_COPYING
 cp ext/mbstring/ucgendat/OPENLDAP_LICENSE ucgendat_LICENSE
 cp ext/fileinfo/libmagic/LICENSE libmagic_LICENSE
 cp ext/bcmath/libbcmath/COPYING.LIB libbcmath_COPYING
@@ -784,6 +829,15 @@ if test "x${vpdo}" != "x%{pdover}"; then
    : Update the pdover macro and rebuild.
    exit 1
 fi
+
+%if %{with_zip}
+ver=$(sed -n '/#define PHP_ZIP_VERSION /{s/.* "//;s/".*$//;p}' ext/zip/php_zip.h)
+if test "$ver" != "%{zipver}"; then
+   : Error: Upstream ZIP version is now ${ver}, expecting %{zipver}.
+   : Update the %{zipver} macro and rebuild.
+   exit 1
+fi
+%endif
 
 ver=$(sed -n '/#define PHP_JSON_VERSION /{s/.* "//;s/".*$//;p}' ext/json/php_json.h)
 if test "$ver" != "%{jsonver}"; then
@@ -907,7 +961,9 @@ ln -sf ../configure
     --with-mysqli=mysqlnd \
     --with-pdo-mysql=mysqlnd \
 %endif
+%if %{with_onig}
     --with-onig=%{_prefix} \
+%endif
     --with-openssl \
 %if %{with_argon2}
     --with-password-argon2 \
@@ -916,6 +972,9 @@ ln -sf ../configure
     --with-pic \
     --with-png-dir=%{_prefix} \
     --with-system-ciphers \
+%if %{with_libpcre}
+    --with-pcre-regex=%{_prefix} \
+%endif
     --with-system-tzdata \
     --with-xmlrpc \
     --with-zlib \
@@ -1279,7 +1338,8 @@ cat %{SOURCE3} > macros.php
 sed -i -e "s/@PHP_APIVER@/%{apiver}%{isasuffix}/" \
     -e "s/@PHP_ZENDVER@/%{zendver}%{isasuffix}/" \
     -e "s/@PHP_PDOVER@/%{pdover}%{isasuffix}/" \
-    -e "s/@PHP_VERSION@/%{version}/" macros.php
+    -e "s/@PHP_VERSION@/%{version}/" \
+    -e "/zts/d" macros.php
 mkdir -p $RPM_BUILD_ROOT%{_rpmconfigdir}/macros.d
 install -m 644 -D macros.php \
            $RPM_BUILD_ROOT%{_rpmconfigdir}/macros.d/macros.%{php_main}
@@ -1324,7 +1384,7 @@ exit 0
 %files common
 %doc CODING_STANDARDS CREDITS EXTENSIONS NEWS README*
 %doc LICENSE TSRM_LICENSE libmagic_LICENSE timelib_LICENSE
-%doc libmbfl_LICENSE ucgendat_LICENSE
+%doc libmbfl_LICENSE ucgendat_LICENSE oniguruma_COPYING
 %doc php.ini-*
 %config(noreplace) %{php_sysconfdir}/php.ini
 %dir %{php_sysconfdir}/php.d
@@ -1442,6 +1502,15 @@ exit 0
 %endif
 
 %changelog
+* Sat Jan  2 2021 Alexander Ursu <alexander.ursu@gmail.com> - 7.3.25-2
+- backport fix for https://bugs.php.net/74083 from 7.4
+  master PHP-fpm is stopped on multiple reloads
+- display build system and provider in phpinfo (from 8.0)
+- curl: add CURL_SSLVERSION_TLSv1_x constant (EL)
+
+* Tue Nov 24 2020 Remi Collet <remi@remirepo.net> - 7.3.25-1
+- Update to 7.3.25 - http://www.php.net/releases/7_3_25.php
+
 * Mon Aug 10 2020 Remi Collet <remi@remirepo.net> - 7.3.21-1
 - Update to 7.3.21 - http://www.php.net/releases/7_3_21.php
 

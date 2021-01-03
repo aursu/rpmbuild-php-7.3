@@ -114,7 +114,7 @@
 %global apiver      20180731
 %global zendver     20180731
 %global pdover      20170320
-%global zipver      1.13.0
+%global zipver      1.15.4
 %global jsonver     1.7.0
 
 # we don't want -z defs linker flag
@@ -801,21 +801,21 @@ rm Zend/tests/bug68412.phpt
 rm ext/zlib/tests/004-mb.phpt
 
 # Safety check for API version change.
-pver=$(sed -n '/#define PHP_VERSION /{s/.* "//;s/".*$//;p}' main/php_version.h)
+pver=$(sed -n '/#define PHP_VERSION /{s/.* "//;s/".*$//;p;}' main/php_version.h)
 if test "x${pver}" != "x%{version}"; then
    : Error: Upstream PHP version is now ${pver}, expecting %{version}.
    : Update the version macros and rebuild.
    exit 1
 fi
 
-vapi=`sed -n '/#define PHP_API_VERSION/{s/.* //;p}' main/php.h`
+vapi=$(sed -n '/#define PHP_API_VERSION/{s/.* //;p;}' main/php.h)
 if test "x${vapi}" != "x%{apiver}"; then
    : Error: Upstream API version is now ${vapi}, expecting %{apiver}.
    : Update the apiver macro and rebuild.
    exit 1
 fi
 
-vzend=`sed -n '/#define ZEND_MODULE_API_NO/{s/^[^0-9]*//;p;}' Zend/zend_modules.h`
+vzend=$(sed -n '/#define ZEND_MODULE_API_NO/{s/^[^0-9]*//;p;}' Zend/zend_modules.h)
 if test "x${vzend}" != "x%{zendver}"; then
    : Error: Upstream Zend ABI version is now ${vzend}, expecting %{zendver}.
    : Update the zendver macro and rebuild.
@@ -823,7 +823,7 @@ if test "x${vzend}" != "x%{zendver}"; then
 fi
 
 # Safety check for PDO ABI version change
-vpdo=`sed -n '/#define PDO_DRIVER_API/{s/.*[ 	]//;p}' ext/pdo/php_pdo_driver.h`
+vpdo=$(sed -n '/#define PDO_DRIVER_API/{s/.*[ 	]//;p;}' ext/pdo/php_pdo_driver.h)
 if test "x${vpdo}" != "x%{pdover}"; then
    : Error: Upstream PDO ABI version is now ${vpdo}, expecting %{pdover}.
    : Update the pdover macro and rebuild.
@@ -831,7 +831,7 @@ if test "x${vpdo}" != "x%{pdover}"; then
 fi
 
 %if %{with_zip}
-ver=$(sed -n '/#define PHP_ZIP_VERSION /{s/.* "//;s/".*$//;p}' ext/zip/php_zip.h)
+ver=$(sed -n '/#define PHP_ZIP_VERSION /{s/.* "//;s/".*$//;p;}' ext/zip/php_zip.h)
 if test "$ver" != "%{zipver}"; then
    : Error: Upstream ZIP version is now ${ver}, expecting %{zipver}.
    : Update the %{zipver} macro and rebuild.
@@ -839,7 +839,7 @@ if test "$ver" != "%{zipver}"; then
 fi
 %endif
 
-ver=$(sed -n '/#define PHP_JSON_VERSION /{s/.* "//;s/".*$//;p}' ext/json/php_json.h)
+ver=$(sed -n '/#define PHP_JSON_VERSION /{s/.* "//;s/".*$//;p;}' ext/json/php_json.h)
 if test "$ver" != "%{jsonver}"; then
    : Error: Upstream JSON version is now ${ver}, expecting %{jsonver}.
    : Update the %{jsonver} macro and rebuild.

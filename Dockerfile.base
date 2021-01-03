@@ -1,4 +1,4 @@
-ARG centos=7.8.2003
+ARG centos=7.9.2009
 FROM aursu/rpmbuild:${centos}-build
 
 USER root
@@ -22,10 +22,8 @@ RUN yum -y install \
         libxslt-devel \
         mysql-devel \
         nginx-filesystem \
-        oniguruma-devel \
         openldap-devel \
         openssl-devel \
-        pcre2-devel \
         postgresql-devel \
         sendmail \
         sqlite-devel \
@@ -38,4 +36,5 @@ RUN yum -y install \
 
 RUN yum -y --disablerepo=* --enablerepo=bintray-custom install \
         "libzip-devel >= 1.5.1" \
+        oniguruma-devel \
     && yum clean all && rm -rf /var/cache/yum

@@ -161,12 +161,12 @@
 %global with_zip    1
 %global with_libzip 1
 
-%global rpmrel 2
+%global rpmrel 1
 %global baserel %{rpmrel}%{?dist}
 
 Summary: PHP scripting language for creating dynamic web sites
 Name: %{php_main}
-Version: 7.3.25
+Version: 7.3.27
 Release: %{rpmrel}%{?mytag}%{?dist}
 
 # All files licensed under PHP version 3.01, except
@@ -236,6 +236,8 @@ Patch49: php-7.3.24-fpm.patch
 Patch60: php-5.6.31-no-scan-dir-override.patch
 
 # Upstream fixes (100+)
+# Backported from 7.4.16
+Patch100: php-bug80682.patch
 
 # Security fixes (200+)
 
@@ -543,6 +545,7 @@ Summary: Files needed for building PHP extensions
 Requires: %{php_cli}%{?_isa} = %{version}-%{baserel}
 Requires: automake
 Requires: autoconf
+Requires: make
 # see "php-config --libs"
 Requires: krb5-devel%{?_isa}
 Requires: libargon2-devel%{?_isa}
@@ -762,6 +765,7 @@ low-level PHP extension for the libsodium cryptographic library.
 %patch60 -p1
 
 # upstream patches
+%patch100 -p1 -b .bug80682
 
 # security patches
 
@@ -1506,6 +1510,12 @@ exit 0
 %endif
 
 %changelog
+* Tue Feb  2 2021 Remi Collet <remi@remirepo.net> - 7.3.27-1
+- Update to 7.3.27 - http://www.php.net/releases/7_3_27.php
+
+* Thu Jan 28 2021 Remi Collet <remi@remirepo.net> - 7.3.26-2
+- add upstream patch for https://bugs.php.net/80682
+
 * Sat Jan  2 2021 Alexander Ursu <alexander.ursu@gmail.com> - 7.3.25-2
 - backport fix for https://bugs.php.net/74083 from 7.4
   master PHP-fpm is stopped on multiple reloads

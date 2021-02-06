@@ -5,10 +5,10 @@ services:
       context: dev
       args:
         centos: $OS7
-    image: "aursu/php73build:${OS7TAG}-dev"
+    image: aursu/php73build:${OS7TAG}-dev
   centos8php73dev:
     build:
       context: dev
       args:
         centos: $OS8
-    image: "aursu/php73build:${OS8TAG}-dev"
+    image: aursu/php73build:${OS8TAG}-dev

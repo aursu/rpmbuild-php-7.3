@@ -166,7 +166,7 @@
 
 Summary: PHP scripting language for creating dynamic web sites
 Name: %{php_main}
-Version: 7.3.27
+Version: 7.3.28
 Release: %{rpmrel}%{?mytag}%{?dist}
 
 # All files licensed under PHP version 3.01, except
@@ -236,8 +236,10 @@ Patch49: php-7.3.24-fpm.patch
 Patch60: php-5.6.31-no-scan-dir-override.patch
 
 # Upstream fixes (100+)
-# Backported from 7.4.16
+# Backported from 7.4.16 - opcache and pcre.jit
 Patch100: php-bug80682.patch
+# Backported from 7.4.18 - pdo_odbc
+Patch101: php-bug80783.patch
 
 # Security fixes (200+)
 
@@ -766,6 +768,7 @@ low-level PHP extension for the libsodium cryptographic library.
 
 # upstream patches
 %patch100 -p1 -b .bug80682
+%patch101 -p1 -b .bug80783
 
 # security patches
 
@@ -1510,11 +1513,16 @@ exit 0
 %endif
 
 %changelog
-* Tue Feb  2 2021 Remi Collet <remi@remirepo.net> - 7.3.27-1
-- Update to 7.3.27 - http://www.php.net/releases/7_3_27.php
+* Tue Apr 27 2021 Remi Collet <remi@remirepo.net> - 7.3.28-1
+- Update to 7.3.28 - http://www.php.net/releases/7_3_28.php
+
+* Thu Apr  8 2021 Remi Collet <remi@remirepo.net> - 7.3.27-2
+- add upstream patch for https://bugs.php.net/80783
+  PDO ODBC truncates BLOB records at every 256th byte
 
 * Thu Jan 28 2021 Remi Collet <remi@remirepo.net> - 7.3.26-2
 - add upstream patch for https://bugs.php.net/80682
+  fix opcache doesn't honour pcre.jit option
 
 * Sat Jan  2 2021 Alexander Ursu <alexander.ursu@gmail.com> - 7.3.25-2
 - backport fix for https://bugs.php.net/74083 from 7.4

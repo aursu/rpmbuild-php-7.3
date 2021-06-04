@@ -4,11 +4,7 @@
 
 ## Bintray RPM repo
 
-The packages available on BinTray:
-
-```
-wget https://bintray.com/aursu/php73custom/rpm -O bintray-aursu-php73custom.repo
-```
+EOL since May 1st 2021 :(
 
 ## Docker images
 

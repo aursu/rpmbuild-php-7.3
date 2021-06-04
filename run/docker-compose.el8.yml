@@ -12,6 +12,14 @@ services:
       context: .
       dockerfile: Dockerfile.el8
       args:
-        image: nodedev
         centos: $OS8
+        image: nodedev
     image: aursu/php73build:${OS8TAG}-devbase
+  centos8php73dev2base:
+    build:
+      context: .
+      dockerfile: Dockerfile.el8
+      args:
+        centos: $OS8
+        image: node16dev
+    image: aursu/php73build:${OS8TAG}-dev2base
